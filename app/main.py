@@ -1,24 +1,54 @@
+from database import users
+from fastapi import FastAPI, Path, Body
+from pydantic import BaseModel
 from uuid import uuid4
-from fastapi import FastAPI
-import mysql.connector
+from models import User
 
 app = FastAPI()
 
-def connect_to_database():
-    mydb = mysql.connector.connect(
-    host="mariadb",
-    user="reikinoapp",
-    password="reikinoapp"
-    # database="reikinoapp"
-    )
-    return mydb
+@app.get("/get-database")
+def get_database():
+    return users
 
-@app.post("/api/v1/user/create_user")
-async def create_user(first_name: str, last_name: str, email: str, password: str, is_active: bool):
-    mydb = connect_to_database()
-    mycursor = mydb.cursor()
-    query = "INSERT INTO reikinoapp.user (first_name, last_name, email, password, is_active) VALUES (%s, %s, %s, %s, %s)"
-    values = (first_name, last_name, email, password, is_active)
-    mycursor.execute(query, values)
-    mydb.commit()
-    return {'message': 'dale gremio'}
+@app.get("/get-user/{user_id}")
+def get_user(user_id : int = Path(None, description = "Procure pela ID, Email ou Nome.")):
+    if user_id not in users:
+        return {"Mensagem" : "Usuário não existente."}
+
+    return users[user_id]
+
+@app.post("/create-user")
+def create_user(user : User):
+    user_id = str(uuid4())
+
+    first_name = user.first_name
+    last_name = user.last_name
+    email = user.email
+    password = user.password
+    is_active = user.is_active
+
+    users[user_id] = {"_id" : user_id, "first_name" : first_name, "last_name" : last_name, "email" : email, "password" : password, "is_active" : bool(is_active)}
+
+    return {"Mensagem" : "Usuário criado com sucesso!"}
+
+@app.put("/update-user")
+def update_user(user_id : str, user : User):
+
+    first_name = user.first_name
+    last_name = user.last_name
+    email = user.email
+    password = user.password
+    is_active = user.is_active
+
+    users[user_id] = {"_id" : user_id, "first_name" : first_name, "last_name" : last_name, "email" : email, "password" : password, "is_active" : bool(is_active)}
+
+    return {"Mensagem" : "Usuário formatado com sucesso!"}
+
+
+@app.delete("/delete-user/{user_id}")
+def delete_user(user_id : str):
+    if user_id not in users:
+        return {"Erro" : "Usuário não existente."}
+
+    del users[user_id]
+    return {"Mensagem" : "Usuário deletado com sucesso!"}

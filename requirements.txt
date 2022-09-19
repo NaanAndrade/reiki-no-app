@@ -2,5 +2,5 @@ FastAPI
 uvicorn
 pydantic
 uuid
-sqlalchemy
+sqlalchemy  # !
 mysql-connector-python==8.0.29
